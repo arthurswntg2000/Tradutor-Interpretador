@@ -1,46 +1,52 @@
-
 public class Scanner {
-    private final String input;
-    private int pos = 0;
 
-    public Scanner(String input) {
+    private byte[] input;
+    private int current; 
+
+    public Scanner(byte[] input) {
         this.input = input;
     }
 
-    public Token nextToken() {
-        
-        while (pos < input.length() && Character.isWhitespace(input.charAt(pos))) {
-            pos++;
+    private char peek() {
+        if (current < input.length)
+            return (char) input[current];
+        return '\0';
+    }
+
+    private void advance() {
+        char ch = peek();
+        if (ch != '\0') {
+            current++;
+        }
+    }
+
+    public char nextToken() {
+        char ch = peek();
+
+        if (Character.isDigit(ch)) {
+            advance();
+            return ch;
         }
 
-        
-        if (pos >= input.length()) {
-            return new Token(Token.Type.EOF, "");
+        switch (ch) {
+            case '+':
+            case '-':
+                advance();
+                return ch;
+            default:
+                break;
         }
 
-        char current = input.charAt(pos);
+        return '\0';
+    }
 
-       
-        if (Character.isDigit(current)) {
-            StringBuilder number = new StringBuilder();
-            while (pos < input.length() && Character.isDigit(input.charAt(pos))) {
-                number.append(input.charAt(pos));
-                pos++;
-            }
-            return new Token(Token.Type.NUMBER, number.toString());
-        }
-
-       
-        if (current == '+') {
-            pos++;
-            return new Token(Token.Type.PLUS, "+");
-        }
-
-        if (current == '-') {
-            pos++;
-            return new Token(Token.Type.MINUS, "-");
-        }
-
-        throw new RuntimeException("Caractere inesperado: '" + current + "'");
+    public static void main(String[] args) {
+        String input = "4-8+6";
+        Scanner scan = new Scanner(input.getBytes());
+        System.out.println(scan.nextToken());
+        System.out.println(scan.nextToken());
+        System.out.println(scan.nextToken());
+        System.out.println(scan.nextToken());
+        System.out.println(scan.nextToken());
     }
 }
