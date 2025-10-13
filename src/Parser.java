@@ -1,53 +1,56 @@
-// src/Parser.java
+
 public class Parser {
-    private String input;
-    private int pos = 0;
-    private char lookahead;
+    private Scanner scanner;
+    private Token currentToken;
 
     public Parser(String input) {
-        this.input = input;
-        this.lookahead = input.charAt(0);
+        this.scanner = new Scanner(input);
+        this.currentToken = scanner.nextToken();
     }
 
-    private void next() {
-        pos++;
-        if (pos < input.length())
-            lookahead = input.charAt(pos);
-        else
-            lookahead = '$'; // fim de cadeia
-    }
-
-    private void match(char expected) {
-        if (lookahead == expected) {
-            next();
+    private void eat(Token.Type type) {
+        if (currentToken.getType() == type) {
+            currentToken = scanner.nextToken();
         } else {
-            throw new RuntimeException("Erro de sintaxe: esperado '" + expected + "' mas encontrado '" + lookahead + "'");
+            throw new RuntimeException("Erro de sintaxe: esperado " + type + " mas encontrado " + currentToken);
         }
     }
 
-    // Grammar: E -> T { (+|-) T }
     public void parse() {
         expr();
-        if (lookahead != '$')
-            throw new RuntimeException("Erro: entrada não consumida.");
-    }
-
-    private void expr() {
-        term();
-        while (lookahead == '+' || lookahead == '-') {
-            char op = lookahead;
-            next();
-            term();
-            System.out.println(op + " ");
+        if (currentToken.getType() != Token.Type.EOF) {
+            throw new RuntimeException("Erro: entrada não consumida completamente.");
         }
     }
 
-    private void term() {
-        if (Character.isDigit(lookahead)) {
-            System.out.println(lookahead + " ");
-            next();
+    
+    private void expr() {
+        number();
+        oper();
+    }
+
+   
+    private void oper() {
+        if (currentToken.getType() == Token.Type.PLUS) {
+            eat(Token.Type.PLUS);
+            number();
+            System.out.println("+ ");
+            oper();
+        } else if (currentToken.getType() == Token.Type.MINUS) {
+            eat(Token.Type.MINUS);
+            number();
+            System.out.println("- ");
+            oper();
+        }
+    }
+
+    
+    private void number() {
+        if (currentToken.getType() == Token.Type.NUMBER) {
+            System.out.println(currentToken.getValue() + " ");
+            eat(Token.Type.NUMBER);
         } else {
-            throw new RuntimeException("Erro: dígito esperado, encontrado '" + lookahead + "'");
+            throw new RuntimeException("Erro: número esperado, encontrado " + currentToken);
         }
     }
 }
