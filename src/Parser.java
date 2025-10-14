@@ -3,15 +3,18 @@ public class Parser {
     private Scanner scan;
     private Token currentToken;
 
+   
     public Parser(byte[] input) {
         scan = new Scanner(input);
-        nextToken();
+        currentToken = scan.nextToken();
     }
 
+ 
     private void nextToken() {
         currentToken = scan.nextToken();
     }
 
+   
     private void match(TokenType t) {
         if (currentToken.type == t) {
             nextToken();
@@ -20,29 +23,52 @@ public class Parser {
         }
     }
 
+   
+
     
-    void parse() {
+    void letStatement() {
+        match(TokenType.LET);
+        String id = currentToken.lexeme;
+        match(TokenType.IDENT);
+        match(TokenType.EQ);
         expr();
+        System.out.println("pop " + id);
+        match(TokenType.SEMICOLON);
     }
 
+   
     void expr() {
-        number();
+        term();
         oper();
     }
 
+  
     void oper() {
         if (currentToken.type == TokenType.PLUS) {
             match(TokenType.PLUS);
-            number();
+            term();
             System.out.println("add");
             oper();
         } else if (currentToken.type == TokenType.MINUS) {
             match(TokenType.MINUS);
-            number();
+            term();
             System.out.println("sub");
             oper();
         }
     }
+
+   
+    void term() {
+        if (currentToken.type == TokenType.NUMBER) {
+            number();
+        } else if (currentToken.type == TokenType.IDENT) {
+            System.out.println("push " + currentToken.lexeme);
+            match(TokenType.IDENT);
+        } else {
+            throw new Error("syntax error at token: " + currentToken);
+        }
+    }
+
 
     void number() {
         System.out.println("push " + currentToken.lexeme);
@@ -50,8 +76,13 @@ public class Parser {
     }
 
 
+    public void parse() {
+        letStatement();
+    }
+
+  
     public static void main(String[] args) {
-        String input = "89 +508 -7+99";
+        String input = "let a = 42 + preco - 8;";
         Parser p = new Parser(input.getBytes());
         p.parse();
     }
