@@ -1,69 +1,52 @@
 public class Scanner {
 
     private byte[] input;
-    private int current; 
+    private int pos = 0;
 
     public Scanner(byte[] input) {
         this.input = input;
     }
 
     private char peek() {
-        if (current < input.length)
-            return (char) input[current];
-        return '\0';
+        if (pos >= input.length) return '\0';
+        return (char) input[pos];
     }
 
     private void advance() {
-        char ch = peek();
-        if (ch != '\0') {
-            current++;
-        }
-    }
-
-
-    private Token number() {
-        int start = current;
-        while (Character.isDigit(peek())) {
-            advance();
-        }
-        String n = new String(input, start, current - start);
-        return new Token(TokenType.NUMBER, n);
-    }
-
-  
-    public Token nextToken() {
-        char ch = peek();
-
-        if (ch == '0') {
-            advance();
-            return new Token(TokenType.NUMBER, Character.toString(ch));
-        } else if (Character.isDigit(ch))
-            return number();
-
-        switch (ch) {
-            case '+':
-                advance();
-                return new Token(TokenType.PLUS, "+");
-            case '-':
-                advance();
-                return new Token(TokenType.MINUS, "-");
-            case '\0':
-                return new Token(TokenType.EOF, "EOF");
-            default:
-                throw new Error("lexical error at " + ch);
-        }
+        pos++;
     }
 
     
-    public static void main(String[] args) {
-        String input = "289-85+0+69";
-        Scanner scan = new Scanner(input.getBytes());
-        System.out.println(scan.nextToken());
-        System.out.println(scan.nextToken());
-        System.out.println(scan.nextToken());
-        System.out.println(scan.nextToken());
-        System.out.println(scan.nextToken());
-        System.out.println(scan.nextToken());
-        System.out.println(scan.nextToken());
+    private void skipWhitespace() {
+        char ch = peek();
+        while (ch == ' ' || ch == '\r' || ch == '\t' || ch == '\n') {
+            advance();
+            ch = peek();
+        }
+    }
+
+    public Token nextToken() {
+
+        skipWhitespace(); 
+
+        char ch = peek();
+        if (ch == '\0') {
+            return new Token(TokenType.EOF, "");
+        } else if (Character.isDigit(ch)) {
+            StringBuilder sb = new StringBuilder();
+            while (Character.isDigit(peek())) {
+                sb.append(peek());
+                advance();
+            }
+            return new Token(TokenType.NUMBER, sb.toString());
+        } else if (ch == '+') {
+            advance();
+            return new Token(TokenType.PLUS, "+");
+        } else if (ch == '-') {
+            advance();
+            return new Token(TokenType.MINUS, "-");
+        } else {
+            throw new Error("lexical error: unexpected character '" + ch + "'");
+        }
     }
 }
