@@ -1,78 +1,72 @@
-import java.util.HashMap;
-import java.util.Map;
-
 public class Scanner {
+
     private final byte[] input;
-    private int current = 0;
-
-    private static final Map<String, TokenType> keywords;
-
-    static {
-        keywords = new HashMap<>();
-        keywords.put("let", TokenType.LET);
-        keywords.put("print", TokenType.PRINT);
-    }
+    private int pos = 0;
 
     public Scanner(byte[] input) {
         this.input = input;
     }
 
-    private boolean isAtEnd() {
-        return current >= input.length;
+    // Avança um caractere
+    private void advance() {
+        pos++;
     }
 
-    private char advance() {
-        return (char) input[current++];
-    }
-
+    // Olha o próximo caractere sem consumir
     private char peek() {
-        if (isAtEnd()) return '\0';
-        return (char) input[current];
+        if (pos >= input.length) return '\0';
+        return (char) input[pos];
     }
 
-    private boolean isDigit(char c) {
-        return c >= '0' && c <= '9';
-    }
-
-    private boolean isAlpha(char c) {
-        return (c >= 'a' && c <= 'z') ||
-               (c >= 'A' && c <= 'Z') ||
-               c == '_';
-    }
-
-    private boolean isAlphaNumeric(char c) {
-        return isAlpha(c) || Character.isDigit(c);
-    }
-
+    // Pula espaços em branco e quebras de linha
     private void skipWhitespace() {
-        while (true) {
-            char ch = peek();
-            if (ch == ' ' || ch == '\r' || ch == '\t' || ch == '\n') {
-                advance();
-            } else {
-                break;
-            }
+        char ch = peek();
+        while (ch == ' ' || ch == '\r' || ch == '\t' || ch == '\n') {
+            advance();
+            ch = peek();
         }
     }
 
+    // Retorna o próximo token
     public Token nextToken() {
         skipWhitespace();
-
-        if (isAtEnd()) return new Token(TokenType.EOF, "");
-
         char ch = peek();
 
-       
-        if (isDigit(ch)) {
-            return number();
+        if (ch == '\0') {
+            return new Token(TokenType.EOF, "");
         }
 
-       
-        if (isAlpha(ch)) {
-            return identifier();
+        // Números
+        if (Character.isDigit(ch)) {
+            StringBuilder num = new StringBuilder();
+            while (Character.isDigit(peek())) {
+                num.append(peek());
+                advance();
+            }
+            return new Token(TokenType.NUMBER, num.toString());
         }
 
-       
+        // Identificadores ou palavras reservadas
+        if (Character.isLetter(ch)) {
+            StringBuilder id = new StringBuilder();
+            while (Character.isLetterOrDigit(peek())) {
+                id.append(peek());
+                advance();
+            }
+
+            String word = id.toString();
+
+            switch (word) {
+                case "let":
+                    return new Token(TokenType.LET, word);
+                case "print":
+                    return new Token(TokenType.PRINT, word);
+                default:
+                    return new Token(TokenType.IDENTIFIER, word);
+            }
+        }
+
+        // Símbolos e operadores
         switch (ch) {
             case '+':
                 advance();
@@ -82,29 +76,12 @@ public class Scanner {
                 return new Token(TokenType.MINUS, "-");
             case '=':
                 advance();
-                return new Token(TokenType.EQ, "=");
+                return new Token(TokenType.ASSIGN, "=");
             case ';':
                 advance();
                 return new Token(TokenType.SEMICOLON, ";");
+            default:
+                throw new Error("Erro léxico: caractere inesperado '" + ch + "'");
         }
-
-        throw new Error("lexical error at " + ch);
-    }
-
-    private Token number() {
-        int start = current;
-        while (isDigit(peek())) advance();
-        String num = new String(input, start, current - start);
-        return new Token(TokenType.NUMBER, num);
-    }
-
-    private Token identifier() {
-        int start = current;
-        while (isAlphaNumeric(peek())) advance();
-
-        String id = new String(input, start, current - start);
-        TokenType type = keywords.get(id);
-        if (type == null) type = TokenType.IDENT;
-        return new Token(type, id);
     }
 }

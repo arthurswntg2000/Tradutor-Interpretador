@@ -36,3 +36,19 @@ Nesta etapa, o Scanner foi aprimorado para reconhecer números com múltiplos d�
 e classificar tokens em tipos distintos (PLUS, MINUS, NUMBER, EOF). O Token é agora
 uma estrutura composta por tipo e lexema, o que permitirá ao Parser trabalhar
 com maior abstração sintática.
+
+Interpretador (Interpretador.java)
+
+Executa o código intermediário
+
+Suporta as instruções:
+
+PUSH <valor>
+
+POP <variável>
+
+ADD
+
+SUB
+
+PRINT

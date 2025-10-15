@@ -1,120 +1,96 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class Parser {
-
-    private Scanner scan;
+    private final Scanner scanner;
     private Token currentToken;
+    private final List<String> output = new ArrayList<>();
 
-    
     public Parser(byte[] input) {
-        scan = new Scanner(input);
-        currentToken = scan.nextToken();
+        this.scanner = new Scanner(input);
+        this.currentToken = scanner.nextToken();
     }
 
-    
-    private void nextToken() {
-        currentToken = scan.nextToken();
-    }
-
-   
-    private void match(TokenType t) {
-        if (currentToken.type == t) {
-            nextToken();
+    private void match(TokenType expected) {
+        if (currentToken.type == expected) {
+            currentToken = scanner.nextToken();
         } else {
-            throw new Error("syntax error: expected " + t + " but found " + currentToken.type);
+            throw new Error("Syntax error: expected " + expected + " but found " + currentToken.type);
         }
     }
 
-  
-
     
-    void statements() {
+    public String output() {
+        return String.join(System.lineSeparator(), output);
+    }
+
+   
+    public void parse() {
+        statements();
+    }
+
+   
+    private void statements() {
         while (currentToken.type != TokenType.EOF) {
             statement();
         }
     }
 
     
-    void statement() {
-        if (currentToken.type == TokenType.PRINT) {
-            printStatement();
-        } else if (currentToken.type == TokenType.LET) {
+    private void statement() {
+        if (currentToken.type == TokenType.LET) {
             letStatement();
+        } else if (currentToken.type == TokenType.PRINT) {
+            printStatement();
         } else {
-            throw new Error("syntax error: unexpected token " + currentToken.type);
+            throw new Error("Syntax error at statement: unexpected token " + currentToken.type);
         }
     }
 
-    
-    void printStatement() {
+   
+    private void letStatement() {
+        match(TokenType.LET);
+        String varName = currentToken.lexeme;
+        match(TokenType.IDENTIFIER);
+        match(TokenType.ASSIGN);
+        expr();
+        output.add("pop " + varName);
+        match(TokenType.SEMICOLON);
+    }
+
+ 
+    private void printStatement() {
         match(TokenType.PRINT);
         expr();
-        System.out.println("print");
+        output.add("print");
         match(TokenType.SEMICOLON);
     }
 
    
-    void letStatement() {
-        match(TokenType.LET);
-        String id = currentToken.lexeme;
-        match(TokenType.IDENT);
-        match(TokenType.EQ);
-        expr();
-        System.out.println("pop " + id);
-        match(TokenType.SEMICOLON);
-    }
-
-  
-    void expr() {
+    private void expr() {
         term();
-        oper();
-    }
-
-   
-    void oper() {
-        if (currentToken.type == TokenType.PLUS) {
-            match(TokenType.PLUS);
+        while (currentToken.type == TokenType.PLUS || currentToken.type == TokenType.MINUS) {
+            Token op = currentToken;
+            match(op.type);
             term();
-            System.out.println("add");
-            oper();
-        } else if (currentToken.type == TokenType.MINUS) {
-            match(TokenType.MINUS);
-            term();
-            System.out.println("sub");
-            oper();
+            if (op.type == TokenType.PLUS) {
+                output.add("add");
+            } else {
+                output.add("sub");
+            }
         }
     }
 
   
-    void term() {
+    private void term() {
         if (currentToken.type == TokenType.NUMBER) {
-            number();
-        } else if (currentToken.type == TokenType.IDENT) {
-            System.out.println("push " + currentToken.lexeme);
-            match(TokenType.IDENT);
+            output.add("push " + currentToken.lexeme);
+            match(TokenType.NUMBER);
+        } else if (currentToken.type == TokenType.IDENTIFIER) {
+            output.add("push " + currentToken.lexeme);
+            match(TokenType.IDENTIFIER);
         } else {
-            throw new Error("syntax error at token: " + currentToken);
+            throw new Error("Syntax error: expected NUMBER or IDENTIFIER but found " + currentToken.type);
         }
-    }
-
-
-    void number() {
-        System.out.println("push " + currentToken.lexeme);
-        match(TokenType.NUMBER);
-    }
-
-    
-    public void parse() {
-        statements();
-    }
-
-
-    public static void main(String[] args) {
-        String input = """
-            let a = 42 + 5 - 8;
-            let b = 56 + 8;
-            print a + b + 6;
-        """;
-
-        Parser p = new Parser(input.getBytes());
-        p.parse();
     }
 }
