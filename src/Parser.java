@@ -3,13 +3,13 @@ public class Parser {
     private Scanner scan;
     private Token currentToken;
 
-   
+    
     public Parser(byte[] input) {
         scan = new Scanner(input);
         currentToken = scan.nextToken();
     }
 
- 
+    
     private void nextToken() {
         currentToken = scan.nextToken();
     }
@@ -23,9 +23,35 @@ public class Parser {
         }
     }
 
-   
+  
 
     
+    void statements() {
+        while (currentToken.type != TokenType.EOF) {
+            statement();
+        }
+    }
+
+    
+    void statement() {
+        if (currentToken.type == TokenType.PRINT) {
+            printStatement();
+        } else if (currentToken.type == TokenType.LET) {
+            letStatement();
+        } else {
+            throw new Error("syntax error: unexpected token " + currentToken.type);
+        }
+    }
+
+    
+    void printStatement() {
+        match(TokenType.PRINT);
+        expr();
+        System.out.println("print");
+        match(TokenType.SEMICOLON);
+    }
+
+   
     void letStatement() {
         match(TokenType.LET);
         String id = currentToken.lexeme;
@@ -36,13 +62,13 @@ public class Parser {
         match(TokenType.SEMICOLON);
     }
 
-   
+  
     void expr() {
         term();
         oper();
     }
 
-  
+   
     void oper() {
         if (currentToken.type == TokenType.PLUS) {
             match(TokenType.PLUS);
@@ -57,7 +83,7 @@ public class Parser {
         }
     }
 
-   
+  
     void term() {
         if (currentToken.type == TokenType.NUMBER) {
             number();
@@ -75,14 +101,19 @@ public class Parser {
         match(TokenType.NUMBER);
     }
 
-
+    
     public void parse() {
-        letStatement();
+        statements();
     }
 
-  
+
     public static void main(String[] args) {
-        String input = "let a = 42 + preco - 8;";
+        String input = """
+            let a = 42 + 5 - 8;
+            let b = 56 + 8;
+            print a + b + 6;
+        """;
+
         Parser p = new Parser(input.getBytes());
         p.parse();
     }
